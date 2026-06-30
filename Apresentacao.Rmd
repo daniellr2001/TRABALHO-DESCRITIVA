@@ -1,0 +1,71 @@
+---
+title: "Análise da  Seleção Brasileira de Futebol Masculino em sua História"
+author: "**Autores:** Daniel Luis da Rosa, Luis Gustavo Vieira Apel, Matheus Philipe Barros Nali"
+date: "2026-06-29"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: readable
+    highlight: tango
+---
+<hr style="border: 1px solid #333; margin: 20px 0;">
+
+![](https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.ultimadivisao.com.br%2Fwp-content%2Fuploads%2F2020%2F07%2Fselecao-de-1970.jpg&f=1&nofb=1&ipt=608f22673fa15839166b836d3d1a10c114e91bbba54811a679a17838e26e5e65)
+
+## 1. Descrição do Estudo
+
+Neste estudo realizou-se uma análise do desempenho da seleção brasileira de futebol masculino em sua história, bem como de seus goleadores. Os dados para análise foram retirados do conjunto de dados "International football results from 1872 to 2026", disponível em: https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017. 
+  <p>
+Este conjunto de dados armazena grande quantidade de resultados entre seleções masculinas de futebol, desde amistosos até jogos de competições oficiais. Assim, realizou-se uma filtragem dos dados disponíveis nos bancos, selecionando-se apenas aqueles pertinentes à análise da seleção brasileira masculina de futebol.
+<br>
+
+## 2. Objetivo do estudo
+
+Este trabalho teve como objetivo geral a análise do desempenho da seleção brasileira de futebol masculino em sua história. Tal meta foi então desmembrada em objetivos específicos, tendo em vista os dados disponíveis nos bancos: 
+<p>
+1. Avaliação da distribuição de gols do brasil de acordo com o tempo de jogo; 
+2. Seleções contra as quais o Brasil apresenta melhor e pior desempenho; 
+3. Maiores goleadores a favor e contra a seleção brasileira; 
+4. Desempenho da seleção brasileira como mandante, em campo neutro ou fora de casa.
+<br>
+
+## 3. Descrição das variáveis
+- **Quantidade de gols** (variável quantitativa discreta)
+- **Minutagem de cada gol** (em minutos; variável quantitativa discreta)
+- **Seleções** (variável qualitativa nominal)
+- **Goleadores** (variável qualitativa nominal)
+- **Tipo de gol**: pênalti ou não (variável qualitativa binária)
+- **Local da partida**: jogando em casa, fora ou em campo neutro (variável qualitativa nominal)
+
+## 4. Análises realizadas
+### 4.1. Desempenho da seleção brasileira como mandante, em campo neutro ou fora de casa
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(janitor)
+
+dados <- read.csv("dados/results.csv")
+
+```
+
+```{r setup}
+tabela\_resultados <- dados %>%
+  filter(home\_team == "Brazil" | away\_team == "Brazil") %>% 
+  filter(!is.na(home\_score) & !is.na(away\_score)) %>% 
+  mutate(
+    gols\_brasil = ifelse(home\_team == "Brazil", home\_score, away\_score),
+    gols\_adversario = ifelse(home\_team == "Brazil", away\_score, home\_score),
+    local\_jogo = case\_when(
+      neutral == TRUE ~ "Neutro",
+      country == "Brazil" ~ "Em Casa",
+      TRUE ~ "Fora de Casa"
+    ),
+    resultado = case\_when(
+      gols\_brasil > gols\_adversario ~ "Vitória",
+      gols\_brasil == gols\_adversario ~ "Empate",
+      gols\_brasil < gols\_adversario ~ "Derrota"
+    )
+  )
+```
