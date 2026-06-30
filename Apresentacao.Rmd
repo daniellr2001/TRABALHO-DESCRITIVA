@@ -197,7 +197,7 @@ ggplot(br, aes(x = br_gf)) +
 O resultado mais comum é o Brasil marcar **1 ou 2 gols** por jogo; passar em branco
 acontece em cerca de 15% das partidas.
 
-#### Gols por minuto: o Brasil marca (e sofre) mais no 2º tempo?
+#### Gols por minuto: o Brasil segue a tendência
 
 Para estudar *quando* os gols saem, classificamos cada gol em faixas de 15 minutos.
 
@@ -234,7 +234,7 @@ comp_pro <- data.frame(
   Alemanha  = round(as.numeric(prop.table(table(pro_AL$faixa))) * 100, 2),
   Media     = round(as.numeric(prop.table(table(gols$faixa)))   * 100, 2)
 )
-kable(comp_pro, caption = "% dos gols PRÓ por faixa de minuto")
+kable(comp_pro, caption = "% dos gols a favor por faixa de minuto")
 ```
 
 ```{r daniel_comp_contra, echo=FALSE}
@@ -246,7 +246,7 @@ comp_con <- data.frame(
   Alemanha  = round(as.numeric(prop.table(table(contra_AL$faixa))) * 100, 2),
   Media     = round(as.numeric(prop.table(table(gols$faixa)))   * 100, 2)
 )
-kable(comp_con, caption = "% dos gols CONTRA por faixa de minuto")
+kable(comp_con, caption = "% dos gols adversários por faixa de minuto")
 ```
 
 ```{r daniel_hist, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=3.6, fig.align='center'}
@@ -259,7 +259,7 @@ ggplot(pro_BR, aes(x = minute)) +
 ggplot(contra_BR, aes(x = minute)) +
   geom_histogram(binwidth = 15, boundary = 0, fill = "firebrick", color = "black") +
   labs(x = "Minuto do jogo", y = "Frequência",
-       title = "Gols CONTRA (sofridos) do Brasil por minuto",
+       title = "Gols sofridos pelo Brasil por minuto de partida",
        caption = "Fonte: International football results (Kaggle).")
 ```
 
