@@ -124,7 +124,7 @@ ggplot(resumo_frequencia, aes(x = local_jogo, y = porcentagem, fill = resultado)
 
 ```
 
-Agora, buscmaos inverter a perspectiva da análise. O foco passa a ser o resultado final. Queremos descobrir, por exemplo: das vitórias que a Seleção possui, qual porcentagem foi conquistada dentro de casa e qual foi fora?  
+Agora, buscamos inverter a perspectiva da análise. O foco passa a ser o resultado final. Queremos descobrir, por exemplo: das vitórias que a Seleção possui, qual porcentagem foi conquistada dentro de casa e qual foi fora?  
 
 Tabela de Contingência (Porcentagem por Resultado)  
 
