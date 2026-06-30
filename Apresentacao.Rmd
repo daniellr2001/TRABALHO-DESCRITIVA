@@ -160,3 +160,184 @@ ggplot(dados_grafico_coluna, aes(x = resultado, y = porcentagem, fill = local_jo
   # Cores neutras e sóbrias para diferenciar da paleta de resultados
   scale_fill_manual(values = c("Em Casa" = "#2C3E50", "Fora de Casa" = "#E67E22", "Neutro" = "#95A5A6"))
 ```
+
+### 4.2. Distribuição dos gols do Brasil no tempo de jogo
+
+```{r daniel_setup, include=FALSE}
+library(knitr)
+gols  <- read.csv("dados/goalscorers.csv")
+jogos <- read.csv("dados/results.csv")
+jogos <- jogos[!is.na(jogos$home_score) & !is.na(jogos$away_score), ]
+```
+
+Antes de olhar o "quando" dos gols, um panorama do **quanto**: quantos gols o Brasil
+faz por partida.
+
+
+```{r daniel_resumo, echo=FALSE, message=FALSE, warning=FALSE}
+br <- jogos[jogos$home_team == "Brazil" | jogos$away_team == "Brazil", ]
+br_gf <- ifelse(br$home_team == "Brazil", br$home_score, br$away_score)
+
+resumo <- data.frame(
+  Medida = c("Média", "Mediana", "Desvio padrão"),
+  Valor  = c(round(mean(br_gf), 2), median(br_gf), round(sd(br_gf), 2))
+)
+kable(resumo, caption = "Gols do Brasil por partida")
+```
+
+```{r daniel_dist_partida, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=4, fig.align='center'}
+ggplot(br, aes(x = br_gf)) +
+  geom_bar(fill = "steelblue", color = "black") +
+  labs(x = "Gols do Brasil na partida",
+       y = "Frequência (nº de jogos)",
+       title = "Distribuição dos gols do Brasil por partida",
+       caption = "Fonte: International football results (Kaggle).")
+```
+
+O resultado mais comum é o Brasil marcar **1 ou 2 gols** por jogo; passar em branco
+acontece em cerca de 15% das partidas.
+
+#### Gols por minuto: o Brasil marca (e sofre) mais no 2º tempo?
+
+Para estudar *quando* os gols saem, classificamos cada gol em faixas de 15 minutos.
+
+```{r daniel_faixas, include=FALSE}
+gols <- gols[!is.na(gols$minute), ]
+
+gols$faixa <- ifelse(gols$minute <= 15, "1-15",
+              ifelse(gols$minute <= 30, "16-30",
+              ifelse(gols$minute <= 45, "31-45",
+              ifelse(gols$minute <= 60, "46-60",
+              ifelse(gols$minute <= 75, "61-75",
+              ifelse(gols$minute <= 90, "76-90", "90+"))))))
+gols$faixa <- factor(gols$faixa,
+              levels = c("1-15","16-30","31-45","46-60","61-75","76-90","90+"))
+
+# Gols PRÓ (marcados) e CONTRA (sofridos) por seleção
+pro_BR <- gols[gols$team == "Brazil",    ]
+pro_AR <- gols[gols$team == "Argentina", ]
+pro_FR <- gols[gols$team == "France",    ]
+pro_AL <- gols[gols$team == "Germany",   ]
+
+contra_BR <- gols[(gols$home_team=="Brazil"    | gols$away_team=="Brazil")    & gols$team!="Brazil",    ]
+contra_AR <- gols[(gols$home_team=="Argentina" | gols$away_team=="Argentina") & gols$team!="Argentina", ]
+contra_FR <- gols[(gols$home_team=="France"    | gols$away_team=="France")    & gols$team!="France",    ]
+contra_AL <- gols[(gols$home_team=="Germany"   | gols$away_team=="Germany")   & gols$team!="Germany",   ]
+```
+
+```{r daniel_comp_pro, echo=FALSE}
+comp_pro <- data.frame(
+  Faixa     = c("1-15","16-30","31-45","46-60","61-75","76-90","90+"),
+  Brasil    = round(as.numeric(prop.table(table(pro_BR$faixa))) * 100, 2),
+  Argentina = round(as.numeric(prop.table(table(pro_AR$faixa))) * 100, 2),
+  Franca    = round(as.numeric(prop.table(table(pro_FR$faixa))) * 100, 2),
+  Alemanha  = round(as.numeric(prop.table(table(pro_AL$faixa))) * 100, 2),
+  Media     = round(as.numeric(prop.table(table(gols$faixa)))   * 100, 2)
+)
+kable(comp_pro, caption = "% dos gols PRÓ por faixa de minuto")
+```
+
+```{r daniel_comp_contra, echo=FALSE}
+comp_con <- data.frame(
+  Faixa     = c("1-15","16-30","31-45","46-60","61-75","76-90","90+"),
+  Brasil    = round(as.numeric(prop.table(table(contra_BR$faixa))) * 100, 2),
+  Argentina = round(as.numeric(prop.table(table(contra_AR$faixa))) * 100, 2),
+  Franca    = round(as.numeric(prop.table(table(contra_FR$faixa))) * 100, 2),
+  Alemanha  = round(as.numeric(prop.table(table(contra_AL$faixa))) * 100, 2),
+  Media     = round(as.numeric(prop.table(table(gols$faixa)))   * 100, 2)
+)
+kable(comp_con, caption = "% dos gols CONTRA por faixa de minuto")
+```
+
+```{r daniel_hist, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=3.6, fig.align='center'}
+ggplot(pro_BR, aes(x = minute)) +
+  geom_histogram(binwidth = 15, boundary = 0, fill = "steelblue", color = "black") +
+  labs(x = "Minuto do jogo", y = "Frequência",
+       title = "Gols PRÓ do Brasil por minuto",
+       caption = "Fonte: International football results (Kaggle).")
+
+ggplot(contra_BR, aes(x = minute)) +
+  geom_histogram(binwidth = 15, boundary = 0, fill = "firebrick", color = "black") +
+  labs(x = "Minuto do jogo", y = "Frequência",
+       title = "Gols CONTRA (sofridos) do Brasil por minuto",
+       caption = "Fonte: International football results (Kaggle).")
+```
+
+Tanto os gols marcados quanto os sofridos **crescem ao longo da partida**, com pico
+nos minutos finais (76-90) — um padrão comum a todas as seleções.
+O Brasil tem perfis pró e contra bastante equilibrados entre si.
+
+### 4.3. Adversários: maiores vítimas e quem mais marca contra o Brasil
+
+```{r daniel_adv_setup, include=FALSE}
+gols_br <- gols[gols$home_team == "Brazil" | gols$away_team == "Brazil", ]
+gols_br$adversario <- ifelse(gols_br$home_team == "Brazil",
+                             gols_br$away_team, gols_br$home_team)
+
+pro_goals    <- gols_br[gols_br$team == "Brazil", ]   
+contra_goals <- gols_br[gols_br$team != "Brazil", ]   
+tab_pro    <- table(pro_goals$adversario)
+tab_contra <- table(contra_goals$adversario)
+
+jogos_br <- jogos[jogos$home_team == "Brazil" | jogos$away_team == "Brazil", ]
+jogos_br$adversario <- ifelse(jogos_br$home_team == "Brazil",
+                              jogos_br$away_team, jogos_br$home_team)
+tab_jogos <- table(jogos_br$adversario)
+
+adversarios <- names(tab_jogos)
+jogos_n  <- as.numeric(tab_jogos)
+pro_n    <- as.numeric(tab_pro[adversarios]);    pro_n    <- ifelse(is.na(pro_n), 0, pro_n)
+contra_n <- as.numeric(tab_contra[adversarios]); contra_n <- ifelse(is.na(contra_n), 0, contra_n)
+
+adv <- data.frame(adversario = adversarios, jogos = jogos_n,
+                  pro = pro_n, contra = contra_n)
+adv$pro_por_jogo    <- round(adv$pro    / adv$jogos, 2)
+adv$contra_por_jogo <- round(adv$contra / adv$jogos, 2)
+adv5 <- adv[adv$jogos >= 5, ]   
+```
+
+**Maiores vítimas** (gols que o Brasil marca) em números absolutos e por jogo:
+
+```{r daniel_vitimas, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=3.6, fig.align='center'}
+vit_abs <- adv[order(adv$pro, decreasing = TRUE), ][1:10, ]
+vit_abs$adversario <- factor(vit_abs$adversario,
+                             levels = vit_abs$adversario[order(vit_abs$pro)])
+ggplot(vit_abs, aes(x = adversario, y = pro)) +
+  geom_bar(stat = "identity", fill = "#009C3B") + coord_flip() +
+  labs(x = "Adversário", y = "Gols do Brasil",
+       title = "Maiores vítimas do Brasil — total de gols (absoluto)")
+
+vit_rel <- adv5[order(adv5$pro_por_jogo, decreasing = TRUE), ][1:10, ]
+vit_rel$adversario <- factor(vit_rel$adversario,
+                             levels = vit_rel$adversario[order(vit_rel$pro_por_jogo)])
+ggplot(vit_rel, aes(x = adversario, y = pro_por_jogo)) +
+  geom_bar(stat = "identity", fill = "#3CB371") + coord_flip() +
+  labs(x = "Adversário", y = "Gols do Brasil por jogo",
+       title = "Maiores vítimas do Brasil — gols por jogo (relativo, 5+ jogos)")
+```
+
+**Quem mais marca contra o Brasil**, em números absolutos e por jogo:
+
+```{r daniel_contra, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=3.6, fig.align='center'}
+contra_abs <- adv[order(adv$contra, decreasing = TRUE), ][1:10, ]
+contra_abs$adversario <- factor(contra_abs$adversario,
+                                levels = contra_abs$adversario[order(contra_abs$contra)])
+ggplot(contra_abs, aes(x = adversario, y = contra)) +
+  geom_bar(stat = "identity", fill = "#C1272D") + coord_flip() +
+  labs(x = "Adversário", y = "Gols sofridos pelo Brasil",
+       title = "Quem mais marca contra o Brasil — total de gols (absoluto)")
+
+contra_rel <- adv5[order(adv5$contra_por_jogo, decreasing = TRUE), ][1:10, ]
+contra_rel$adversario <- factor(contra_rel$adversario,
+                                levels = contra_rel$adversario[order(contra_rel$contra_por_jogo)])
+ggplot(contra_rel, aes(x = adversario, y = contra_por_jogo)) +
+  geom_bar(stat = "identity", fill = "#E8736F") + coord_flip() +
+  labs(x = "Adversário", y = "Gols sofridos por jogo",
+       title = "Quem mais marca contra o Brasil — gols por jogo (relativo, 5+ jogos)")
+```
+
+No **absoluto**, aparecem os rivais mais frequentes; no **relativo** (mínimo de 5 jogos,
+para um placar isolado não distorcer).
+
+
+
