@@ -151,13 +151,17 @@ tabela_para_kable_col <- crosstable(tabela_resultados,
                                     cols = local_jogo, 
                                     by = resultado, 
                                     total = "both", 
-                                    percent_pattern = "{p_col} ({n})", # A mágica acontece aqui
+                                    percent_pattern = list(
+                                      body      = "{p_col} ({n})", # % calculada na vertical
+                                      total_row = "100% ({n})",    # Força a exibição de 100% no fim de cada coluna
+                                      total_col = "{p_col} ({n})", # Calcula a % vertical na coluna de Total Geral
+                                      total_all = "100% ({n})"     # Canto inferior direito cravado em 100%
+                                    ),
                                     percent_digits = 1) %>% 
   as_tibble() %>% 
   select(-.id, -label) %>%
   rename(Local = variable)
 
-# Renderiza a tabela
 kable(tabela_para_kable_col, caption = "Resultados dos jogos por local da partida (% por coluna)")
 ```
 
