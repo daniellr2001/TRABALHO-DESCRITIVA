@@ -50,22 +50,113 @@ dados <- read.csv("dados/results.csv")
 
 ```
 
-```{r setup}
-tabela\_resultados <- dados %>%
-  filter(home\_team == "Brazil" | away\_team == "Brazil") %>% 
-  filter(!is.na(home\_score) & !is.na(away\_score)) %>% 
+Preparação do código para análise de desempenho da seleção Brasileira:
+
+```{r, include=TRUE}
+tabela_resultados <- dados %>%
+  filter(home_team == "Brazil" | away_team == "Brazil") %>%  # Filtramos apenas os jogos da seleção Brasileira
+  
+  filter(!is.na(home_score) & !is.na(away_score)) %>%  # Excluímos da análise eventuais dados faltantes
+  
   mutate(
-    gols\_brasil = ifelse(home\_team == "Brazil", home\_score, away\_score),
-    gols\_adversario = ifelse(home\_team == "Brazil", away\_score, home\_score),
-    local\_jogo = case\_when(
-      neutral == TRUE ~ "Neutro",
-      country == "Brazil" ~ "Em Casa",
-      TRUE ~ "Fora de Casa"
+    gols_brasil = ifelse(home_team == "Brazil", home_score, away_score), 
+    gols_adversario = ifelse(home_team == "Brazil", away_score, home_score), # Organizamos se é gol do Brasil ou do adversário
+    
+      local_jogo = case_when(
+      neutral == TRUE ~ "Neutro",              
+      country == "Brazil" ~ "Em Casa",         
+      TRUE ~ "Fora de Casa"                    
     ),
-    resultado = case\_when(
-      gols\_brasil > gols\_adversario ~ "Vitória",
-      gols\_brasil == gols\_adversario ~ "Empate",
-      gols\_brasil < gols\_adversario ~ "Derrota"
+    
+    resultado = case_when(
+      gols_brasil > gols_adversario ~ "Vitória",
+      gols_brasil == gols_adversario ~ "Empate",
+      gols_brasil < gols_adversario ~ "Derrota"
     )
   )
+
+```
+
+
+Com o código perparado, analisaremos o comportamento da Seleção dentro de cada cenário. Ou seja, quando jogamos em casa, qual é a proporção de vitórias? E quando jogamos fora ou em campo neutro?
+
+
+Tabela de Contingência (Porcentagem por Local de Jogo)  
+
+```{r, echo = FALSE}
+# Tabela de Contingência Formatada (Por Linha)
+tabela_resultados %>%
+  tabyl(local_jogo, resultado) %>%       
+  adorn_totals(c("row", "col")) %>%      
+  adorn_percentages("row") %>%           
+  adorn_pct_formatting(digits = 1) %>%   
+  adorn_ns()
+  
+```
+
+```{r, echo = FALSE}
+# Tabela de Frequência (Para o Gráfico)
+resumo_frequencia <- tabela_resultados %>% 
+  group_by(local_jogo, resultado) %>%  
+  summarise(frequencia_absoluta = n(), .groups = 'drop') %>% 
+  group_by(local_jogo) %>%  
+  mutate(
+    porcentagem = (frequencia_absoluta / sum(frequencia_absoluta)) * 100,
+    porcentagem = round(porcentagem, 2) 
+  )
+
+```
+
+
+```{r, echo = FALSE}
+# Gráfico de Barras
+ggplot(resumo_frequencia, aes(x = local_jogo, y = porcentagem, fill = resultado)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black") +
+  geom_text(aes(label = paste0(porcentagem, "%")), 
+            position = position_dodge(width = 0.9), vjust = -0.5, size = 4) +
+  
+  labs(title = "Desempenho da Seleção Brasileira (Em Casa, Fora e Neutro)",
+       x = "Local do Jogo",
+       y = "Porcentagem (%)",
+       fill = "Resultado") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Derrota" = "#F8766D", "Empate" = "#B79F00", "Vitória" = "#00BA38"))
+
+```
+
+Agora, buscmaos inverter a perspectiva da análise. O foco passa a ser o resultado final. Queremos descobrir, por exemplo: das vitórias que a Seleção possui, qual porcentagem foi conquistada dentro de casa e qual foi fora?  
+
+Tabela de Contingência (Porcentagem por Resultado)  
+
+```{r, echo = FALSE}
+# Tabela de Contingência Formatada (Por Coluna)
+tabela_resultados %>%
+  tabyl(local_jogo, resultado) %>%       
+  adorn_totals(c("row", "col")) %>%      
+  # Calculando a % por coluna (resultado)
+  adorn_percentages("col") %>%           
+  adorn_pct_formatting(digits = 1) %>%   
+  adorn_ns()
+```
+
+```{r, echo = FALSE}
+# Prepara os dados (Porcentagem por Resultado)
+dados_grafico_coluna <- tabela_resultados %>%
+  group_by(resultado, local_jogo) %>%
+  summarise(frequencia = n(), .groups = 'drop') %>%
+  group_by(resultado) %>% # O foco aqui mudou para o resultado
+  mutate(porcentagem = round((frequencia / sum(frequencia)) * 100, 1))
+
+# Gráfico de Resultados x Local do Jogo
+ggplot(dados_grafico_coluna, aes(x = resultado, y = porcentagem, fill = local_jogo)) +
+  geom_col(position = "dodge", color = "black") +
+  geom_text(aes(label = paste0(porcentagem, "%")), 
+            position = position_dodge(width = 0.9), vjust = -0.5, size = 4) +
+  labs(title = "Onde a Seleção mais vence, empata ou perde?",
+       x = "Resultado Final",
+       y = "Porcentagem (%)",
+       fill = "Local do Jogo") +
+  theme_minimal() +
+  # Cores neutras e sóbrias para diferenciar da paleta de resultados
+  scale_fill_manual(values = c("Em Casa" = "#2C3E50", "Fora de Casa" = "#E67E22", "Neutro" = "#95A5A6"))
 ```
