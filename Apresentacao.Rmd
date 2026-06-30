@@ -42,6 +42,15 @@ Este trabalho teve como objetivo geral a análise do desempenho da seleção bra
 ### 4.1. Desempenho da seleção brasileira como mandante, em campo neutro ou fora de casa
 
 
+```{css, echo=FALSE}
+caption {
+  color: #333;          /* cor do texto (mais escuro) */
+  font-weight: bold;    /* opcional: negrito */
+  font-size: 100%;      /* opcional: tamanho normal, não reduzido */
+}
+```
+
+
 ```{r setup, include=FALSE}
 library(dplyr)
 library(ggplot2)
