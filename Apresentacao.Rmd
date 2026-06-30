@@ -361,5 +361,137 @@ ggplot(contra_rel, aes(x = adversario, y = contra_por_jogo)) +
 No **absoluto**, aparecem os rivais mais frequentes; no **relativo** (mínimo de 5 jogos,
 para um placar isolado não distorcer).
 
+### 4.4. Goleadores da seleção brasileira
+
+```{r bibliotecas, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+```{r leitura-dados, include=FALSE}
+# Ler CSV com goleadores do Brasil na história
+goleadores_do_brasil <- read.csv("dados/goleadores_do_brasil.csv")
+```
+
+```{r tabela-top20, echo=FALSE}
+# Criar tabela com maiores goleadores em ordem decrescente
+tabela_frequencia <- goleadores_do_brasil %>%
+  group_by(scorer) %>%
+  summarise(
+    gols_totais = n(),
+    gols_penalti = sum(penalty == TRUE, na.rm = TRUE),
+    gols_nao_penalti = gols_totais - gols_penalti,
+    .groups = 'drop'
+  ) %>%
+  arrange(desc(gols_totais))
+
+top_20 <- head(tabela_frequencia, 20)
+
+kable(top_20, caption = "Top 20 artilheiros da Seleção Brasileira",
+      col.names = c("Jogador", "Total de gols", "Gols de pênalti", "Gols sem pênalti"))
+```
+---
+```{r grafico-colunas-top20, echo=FALSE,  fig.align='center'}
+grafico <- top_20 %>%
+  pivot_longer(
+    cols = c(gols_penalti, gols_nao_penalti),
+    names_to = "tipo",
+    values_to = "quantidade"
+  ) %>%
+  ggplot(aes(x = reorder(scorer, -gols_totais), y = quantidade, fill = tipo)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(
+    values = c("gols_penalti" = "#A23B72", "gols_nao_penalti" = "#2E86AB"),
+    labels = c("gols_penalti" = "Penalti", "gols_nao_penalti" = "Bola rolando")
+  ) +
+  labs(
+    title = "Top 20 artilheiros da Seleção Brasileira",
+    subtitle = "Em competições principais (Copa América, Copa do Mundo, Classificatórias...)",
+    x = "Jogador",
+    y = "Total de gols",
+    fill = "Tipo de gol"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11, color = "gray40")
+  )
+
+print(grafico)
+```
+
+```{r tabela_sem_penalti, include=FALSE}
+tabela_sem_penalti <- goleadores_do_brasil %>%
+  group_by(scorer) %>%
+  summarise(
+    total_gols = n(),
+    gols_penalti = sum(penalty == TRUE, na.rm = TRUE),
+    gols_nao_penalti = total_gols - gols_penalti,
+    .groups = 'drop'
+  ) %>%
+  arrange(desc(gols_nao_penalti))
+
+top_20_sem_penalti <- head(tabela_sem_penalti, 20)
+```
+
+```{r grafico-top20-sempenalti, echo=FALSE,  fig.align='center'}
+grafico_sem_penalti <- top_20_sem_penalti %>%
+  ggplot(aes(x = reorder(scorer, -gols_nao_penalti), y = gols_nao_penalti)) +
+  geom_bar(stat = "identity", fill = "#2E86AB") +
+  labs(
+    title = "Top 20 artilheiros da Seleção Brasileira (sem pênaltis)",
+    subtitle = "Em competições principais (Copa América, Copa do Mundo, Classificatórias...)",
+    x = "Jogador",
+    y = "Gols sem pênalti"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11, color = "gray40")
+  )
+
+print(grafico_sem_penalti)
+```
+
+***
+___
+
+### 4.5 Carrascos da seleção
+```{r tabela-gols-contra, echo=FALSE,}
+goalscorers <- read.csv('dados/goalscorers.csv')
+
+# Filtrar gols marcados CONTRA o Brasil
+# (ou seja, quando Brasil é home_team ou away_team, mas o gol foi de outro time)
+gols_contra_brasil <- goalscorers %>%
+  filter(
+    (home_team == "Brazil" & team != "Brazil") |
+      (away_team == "Brazil" & team != "Brazil")
+  )
+
+# Criar tabela de frequência dos maiores goleadores contra o Brasil
+tabela_frequencia_contra <- gols_contra_brasil %>%
+  group_by(scorer) %>%
+  summarise(
+    total_gols = n(),
+    gols_penalti = sum(penalty == TRUE, na.rm = TRUE),
+    gols_nao_penalti = total_gols - gols_penalti,
+    .groups = 'drop'
+  ) %>%
+  arrange(desc(total_gols))
+
+# Top 20
+top_20_contra <- head(tabela_frequencia_contra, 20)
+
+# Exibir tabela
+
+kable(top_20_contra, caption = "Top 20 artilheiros contra a Seleção Brasileira",
+      col.names = c("Jogador", "Total de gols", "Gols de pênalti", "Gols sem pênalti"))
+
+```
+
+
 
 
