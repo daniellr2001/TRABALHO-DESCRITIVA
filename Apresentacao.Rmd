@@ -41,12 +41,15 @@ Este trabalho teve como objetivo geral a análise do desempenho da seleção bra
 ## 4. Análises realizadas
 ### 4.1. Desempenho da seleção brasileira como mandante, em campo neutro ou fora de casa
 
+
 ```{r setup, include=FALSE}
 library(dplyr)
 library(ggplot2)
 library(janitor)
+library(crosstable)
+library(knitr)
 
-dados <- read.csv("dados/results.csv")
+dados <- read.csv("results.csv")
 
 ```
 
@@ -81,16 +84,21 @@ tabela_resultados <- dados %>%
 Com o código preparado, analisaremos o comportamento da Seleção dentro de cada cenário. Ou seja, quando jogamos em casa, qual é a proporção de vitórias? E quando jogamos fora ou em campo neutro?
 
 
-Tabela de Contingência (Porcentagem por Local de Jogo)  
+**Tabela de Contingência (Porcentagem por Local de Jogo) ** 
 
 ```{r, echo = FALSE}
 # Tabela de Contingência Formatada (Por Linha)
-tabela_resultados %>%
-  tabyl(local_jogo, resultado) %>%       
-  adorn_totals(c("row", "col")) %>%      
-  adorn_percentages("row") %>%           
-  adorn_pct_formatting(digits = 1) %>%   
-  adorn_ns()
+tabela_para_kable <- crosstable(tabela_resultados, 
+                                cols = local_jogo, 
+                                by = resultado, 
+                                total = "both", 
+                                percent_pattern = "{p_row} ({n})", 
+                                percent_digits = 1) %>% 
+  as_tibble() %>% 
+  select(-.id, -label) %>%      
+  rename(Local = variable)       
+
+kable(tabela_para_kable, caption = "Resultados dos jogos por local da partida")
   
 ```
 
@@ -126,17 +134,22 @@ ggplot(resumo_frequencia, aes(x = local_jogo, y = porcentagem, fill = resultado)
 
 Agora, buscamos inverter a perspectiva da análise. O foco passa a ser o resultado final. Queremos descobrir, por exemplo: das vitórias que a Seleção possui, qual porcentagem foi conquistada dentro de casa e qual foi fora?  
 
-Tabela de Contingência (Porcentagem por Resultado)  
+**Tabela de Contingência (Porcentagem por Resultado)**  
 
 ```{r, echo = FALSE}
 # Tabela de Contingência Formatada (Por Coluna)
-tabela_resultados %>%
-  tabyl(local_jogo, resultado) %>%       
-  adorn_totals(c("row", "col")) %>%      
-  # Calculando a % por coluna (resultado)
-  adorn_percentages("col") %>%           
-  adorn_pct_formatting(digits = 1) %>%   
-  adorn_ns()
+tabela_para_kable_col <- crosstable(tabela_resultados, 
+                                    cols = local_jogo, 
+                                    by = resultado, 
+                                    total = "both", 
+                                    percent_pattern = "{p_col} ({n})", # A mágica acontece aqui
+                                    percent_digits = 1) %>% 
+  as_tibble() %>% 
+  select(-.id, -label) %>%
+  rename(Local = variable)
+
+# Renderiza a tabela
+kable(tabela_para_kable_col, caption = "Resultados dos jogos por local da partida (% por coluna)")
 ```
 
 ```{r, echo = FALSE}
