@@ -78,7 +78,7 @@ tabela_resultados <- dados %>%
 ```
 
 
-Com o código perparado, analisaremos o comportamento da Seleção dentro de cada cenário. Ou seja, quando jogamos em casa, qual é a proporção de vitórias? E quando jogamos fora ou em campo neutro?
+Com o código preparado, analisaremos o comportamento da Seleção dentro de cada cenário. Ou seja, quando jogamos em casa, qual é a proporção de vitórias? E quando jogamos fora ou em campo neutro?
 
 
 Tabela de Contingência (Porcentagem por Local de Jogo)  
